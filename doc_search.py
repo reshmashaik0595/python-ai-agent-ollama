@@ -5,9 +5,6 @@ from dotenv import load_dotenv
 import numpy
 load_dotenv()
 
-KB_FOLDER = os.getenv('KB_FOLDER')
-EMBED_MODEL = os.getenv("EMBED_MODEL")
-
 client = OpenAI(
     base_url=os.getenv("BASE_URL"),
     api_key=os.getenv("API_KEY")
@@ -15,7 +12,7 @@ client = OpenAI(
 
 def get_embedding(text):
     response = client.embeddings.create(
-        model=EMBED_MODEL,
+        model=os.getenv("EMBED_MODEL"),
         input=text
     )
     return response.data[0].embedding
@@ -72,7 +69,7 @@ def test(user_query, documents, top_k=3):
     results = search(user_query,documents,top_k )
 
     for r in results:
-        print(f"{r["score"]:.2f} - {r["source"]} - {r["size"]} characters")
+        print(f"{r["score"]:.2f} - {r["score"]} - {r["size"]}")
 
 documents = load_documents()
 documents = add_embeddings(documents)

@@ -1,7 +1,7 @@
-# RCA Documents
+# XCA Documents
 
 ## Overview
-This document captures general company records and operational references used by employees and managers for RCA-related support and process consistency.
+This document captures general company records and operational references used by employees and managers.
 
 ## Purpose of Documentation
 The company maintains operational documents to support:
