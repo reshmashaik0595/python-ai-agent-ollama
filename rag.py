@@ -116,6 +116,7 @@ def load_chunks():
         print(f"Created and embedded {len(chunks)} and saved to the vector store file {VECTOR_STORE_FILE}")
     return chunks
 
+# Load the cached vectors once so each search only needs to embed its query.
 chunks = load_chunks()
 
 

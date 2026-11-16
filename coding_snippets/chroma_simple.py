@@ -36,6 +36,7 @@ for s in documents:
     embedding = get_embedding(s)
     embeddings.append(embedding)
 
+# Use a persistent local client so the collection survives process restarts.
 chroma = chromadb.PersistentClient(path='./chromadbStorage')
 
 zorvex_collection = chroma.get_or_create_collection(
@@ -47,6 +48,7 @@ zorvex_collection = chroma.get_or_create_collection(
     }
 )
 
+# Upsert keeps each stored passage associated with its stable ID and vector.
 zorvex_collection.upsert(
     ids=ids,
     documents=documents,
@@ -56,6 +58,7 @@ zorvex_collection.upsert(
 query = "When is the production deployment allowed ?"
 query_embedding = get_embedding(query)
 
+# Retrieve the single closest stored passage for the query vector.
 results = zorvex_collection.query(
     query_embeddings=[query_embedding],
     n_results=1

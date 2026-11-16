@@ -33,6 +33,7 @@ embedding1 = get_embedding(text1)
 embedding2 = get_embedding(text2)
 embedding3 = get_embedding(text3)
 
+# Compare vector directions to estimate which text pairs are semantically closer.
 similary12 = cosine_similarity(embedding1,embedding2)
 similary13 = cosine_similarity(embedding1,embedding3)
 

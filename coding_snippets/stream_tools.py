@@ -42,6 +42,7 @@ for chunk in stream:
         if tc.function and tc.function.arguments:
             obj.function.arguments += tc.function.arguments
 
+# Sort by streamed call index to preserve the order in which the model requested tools.
 calls_list = []
 for key in sorted(calls):
     calls_list.append(calls[key])

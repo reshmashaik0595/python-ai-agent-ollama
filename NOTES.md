@@ -13,7 +13,12 @@ The main assistant tools provide the current time, weather for a supplied city, 
 - `rag.py` — reads and chunks knowledge-base text, creates or loads embeddings, persists them in a JSON vector store, and ranks search results.
 - `knowledge_base/` — local policy and process documents used for retrieval, plus the generated/persisted vector store.
 - `utilities/utilities.py` — provides debug logging when `DEBUG=True`.
-- `coding_snippets/` — smaller examples for embeddings, semantic search, chunk search, and streaming.
+- `coding_snippets/embedding.py` — creates embeddings for example strings and prints vector information.
+- `coding_snippets/sementic_search.py` and `doc_search.py` — embed text or whole documents and rank them by cosine similarity.
+- `coding_snippets/chunk_search.py` — splits documents into paragraphs, caches chunk embeddings in JSON, and searches them.
+- `coding_snippets/chroma_simple.py` — demonstrates storing and querying sample embeddings in a persistent Chroma collection.
+- `coding_snippets/stream_text.py` and `stream_tools.py` — focused examples of streaming text and assembling streamed tool-call fragments.
+- `requirements.txt` — Python package dependencies.
 
 ## Setup and run
 
@@ -22,7 +27,7 @@ Create and activate a virtual environment, then install the packages used by the
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install openai python-dotenv requests numpy
+python -m pip install -r requirements.txt
 ```
 
 Create a local `.env` file. Set `BASE_URL`, `API_KEY`, and `MODEL` for the OpenAI-compatible chat and embedding endpoint. Also set `EMBED_MODEL`, `KB_FOLDER`, and `VECTOR_STORE_FILE` for retrieval. For example, with an Ollama server:
@@ -45,6 +50,8 @@ python simple_ai_assistance.py
 ```
 
 Enter `exit`, `quit`, `bye`, or `goodbye` to leave the chat. The first run creates embeddings and writes the vector store if the configured file does not exist; later runs load that file. Set `DEBUG=True` to print tool and retrieval logs.
+
+The scripts in `coding_snippets/` are standalone examples. They also need the environment variables for their configured API endpoint and model. In particular, embedding and retrieval examples need `EMBED_MODEL`; chunk search also needs `KB_FOLDER` and `VECTOR_STORE_FILE`.
 
 ## Request and tool flow
 
@@ -130,6 +137,71 @@ Tool schemas are declared in `TOOLS`; the corresponding implementations are regi
 ### 13. How would you improve or extend it?
 
 Add tests for chunking, cosine ranking, tool dispatch, and fragmented streaming calls. Rebuild or version the vector store when source documents or the embedding model change; validate vector dimensions and handle zero-length vectors. Consider returning multiple relevant chunks with a minimum relevance threshold, adding bounded or persistent chat history, making the city configurable, and using specific error types and input validation.
+
+### 14. What is the difference between the retrieval examples?
+
+`doc_search.py` embeds whole text documents for a search run. `chunk_search.py` splits each document into paragraphs and saves its chunks and vectors in a JSON file for reuse. `rag.py` uses a similar paragraph-and-JSON approach for the main assistant. `chroma_simple.py` is a separate demonstration that stores sample texts and embeddings in a persistent Chroma collection and queries that collection.
+
+### 15. What is the purpose of cosine similarity?
+
+Cosine similarity compares the direction of two vectors, rather than their raw magnitude. The code computes the dot product divided by both vector norms, then sorts scores from highest to lowest. It is the ranking method in the NumPy search examples; the Chroma example configures its collection to use cosine distance.
+
+### 16. What does streaming change in the user experience?
+
+With `stream=True`, the client receives response fragments as they are generated. `stream_text.py` prints text fragments immediately and also collects the complete response. In the assistant, `stream_chat()` prints text as it arrives and separately reconstructs any tool calls from their fragments.
+
+### 17. Why must streamed tool-call fragments be assembled?
+
+A tool name, ID, or JSON arguments can arrive over multiple chunks. The code groups fragments by the tool-call index and concatenates the name and argument pieces before dispatching the completed call. The index lets it keep multiple calls separate.
+
+### 18. How are tool definitions related to tool implementations?
+
+`TOOLS` describes tool names, descriptions, and JSON parameter schemas for the model. `FUNCTION_NAME_TO_FUNCTION_MAP` maps those names to Python functions. `run_tool()` parses the model-provided argument JSON and dispatches to the matching implementation. Keeping the schema and map aligned is essential.
+
+### 19. What is the role of the system prompt?
+
+The system message sets the assistant's intended behavior. In this project it distinguishes general questions from company questions, tells the model when to search the knowledge base, constrains company answers to retrieved text, requests a source citation, and sets a response length. It is guidance to the model, not a substitute for application-side validation.
+
+### 20. Does the assistant remember previous runs?
+
+No. The `messages` list retains the conversation only while the process is running. It is not written to disk, and the list can grow during a long session. Persistent or bounded conversation history would be a separate feature.
+
+### 21. What work happens before the first RAG search?
+
+`tools.py` imports `search` from `rag.py`. `rag.py` calls `load_chunks()` at module import time, so it loads an existing JSON vector store or reads the text files, requests embeddings, and writes the store if no cache file exists. This means importing the tools can require valid retrieval configuration and a reachable embedding endpoint.
+
+### 22. What does the Chroma example demonstrate that the JSON examples do not?
+
+The example uses `chromadb.PersistentClient` to keep a collection on disk and lets Chroma perform the nearest-neighbor query. The NumPy examples explicitly compare a query vector with each stored vector in Python. The Chroma example uses hard-coded sample records; it is a demonstration, not the storage backend wired into `rag.py`.
+
+### 23. What is the difference between chat and embedding models here?
+
+The chat model, configured by `MODEL`, generates assistant responses and can request tools. The embedding model, configured by `EMBED_MODEL`, turns text into vectors for retrieval. The code sends these requests through the configured OpenAI-compatible API endpoint; the chosen service must provide compatible chat and embedding endpoints and support the requested models.
+
+### 24. How would you test this project without calling a live model?
+
+Test deterministic parts independently: paragraph splitting, cosine-score ordering, result formatting, JSON store loading, and tool-name dispatch can be tested with small local fixtures and mocked API responses. Keep live endpoint checks as integration tests, since they depend on network/service availability and configured model names.
+
+### 25. What should be improved before using this as a production service?
+
+Add automated tests and input/schema validation; use targeted error handling and clear service timeouts; track vector-store version, source-document changes, and embedding model; handle empty or mismatched vectors; evaluate retrieval quality and relevance thresholds; bound or persist conversation history; and verify provider-specific tool-call message formats. Retrieved text and model-generated tool requests should be treated as untrusted input.
+
+### 26. Why might the assistant return an incorrect or unsupported company answer?
+
+Retrieval is approximate, and the main assistant requests only the single top-ranked chunk. The matching passage may omit part of the answer or not be relevant enough. The system prompt asks the model to cite sources and avoid outside knowledge, but the code does not independently verify that every claim is supported. Improving this requires retrieval evaluation, relevance checks, and possibly returning multiple passages.
+
+## Short project pitch
+
+> This is a terminal-based Python assistant built around an OpenAI-compatible API. It streams model responses, lets the model request a small set of Python tools, and uses embeddings plus cosine-similarity search to retrieve local company-document passages. The main RAG example persists chunk vectors as JSON and returns a source-labelled passage to the assistant. The repository also contains smaller examples for streaming, whole-document search, chunk search, and persistent Chroma storage.
+
+## Interview preparation checklist
+
+- Explain the request path from user input through streamed completion, optional tool execution, tool result, and final completion.
+- Draw the RAG path: source documents, paragraph chunks, embeddings, vector persistence, query embedding, similarity ranking, retrieved context.
+- Distinguish the chat model from the embedding model and explain where each is used.
+- Be ready to discuss trade-offs: chunk size, top-k, similarity thresholds, cache invalidation, latency, and context limits.
+- State current limitations honestly, especially in-memory chat history, one-chunk retrieval, and configuration/service dependencies.
+- Describe what you would test and improve next; do not claim a vector database is used by the main `rag.py` path.
 
 ## Key takeaway
 

@@ -102,6 +102,7 @@ TOOLS = [
 ]
 
 # Map tool names to their Python implementations so the assistant can run them.
+# Keep these keys aligned with the function names declared in TOOLS.
 FUNCTION_NAME_TO_FUNCTION_MAP = {
     "get_current_time": get_current_time,
     "get_city_weather": get_city_weather,
