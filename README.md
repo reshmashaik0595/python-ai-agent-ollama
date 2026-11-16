@@ -33,7 +33,7 @@ source .venv/bin/activate
 2. Install the required Python packages:
 
 ```bash
-python -m pip install openai python-dotenv requests
+python -m pip install -r requirements.txt
 ```
 
 3. Create a `.env` file with your local model settings:
@@ -56,6 +56,12 @@ ollama list
 
 ```bash
 python simple_ai_assistance.py
+```
+
+Run the chunk-search example with the same activated environment:
+
+```bash
+python coding_snippets/chunk_search.py
 ```
 
 Example prompts:

@@ -1,0 +1,5 @@
+chromadb
+numpy
+openai
+python-dotenv
+requests
