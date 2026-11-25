@@ -73,6 +73,10 @@ The model proposes a tool call; the Python application is responsible for execut
 
 ## Interview questions and answer notes
 
+### 0. How does a request move through this repository?
+
+`simple_ai_assistance.py` adds the user message to `messages` and sends that history, the system message, and `TOOLS` to the chat API. If the model requests a tool, `run_tool()` looks up and calls the matching Python function. Tool output is appended as a tool message and the model is called again. The loop stops after a normal text response or after three tool/model cycles.
+
 ### 1. What does this project demonstrate?
 
 It demonstrates an LLM assistant that combines streamed chat responses, function/tool calling, and RAG. The model decides when a tool is useful, while application code runs the tool and returns its result.

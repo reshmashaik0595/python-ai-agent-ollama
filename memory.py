@@ -1,6 +1,6 @@
 import os
 import json
-from datatime import datetime
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,6 +8,7 @@ load_dotenv()
 CHAT_FOLDER = os.getenv("CHAT_FOLDER")
 
 def save_chat(path, messages):
+    """Persist a conversation atomically, creating a new file when needed."""
     os.makedirs(CHAT_FOLDER, exist_ok=True)
 
     if path is None:
@@ -28,12 +29,14 @@ def save_chat(path, messages):
     return path
 
 def load_chat(path):
+    """Read and decode one saved JSON conversation."""
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     return data
 
 def list_chats():
+    """Return resumable chats with title, message count, and update time."""
     if not os.path.exists(CHAT_FOLDER):
         return []
 
@@ -52,6 +55,7 @@ def list_chats():
             {
                 "path":path,
                 "title":data.get("title", "(untitled)"),
-                "updated": data.get("updated", "")
+                "updated": data.get("updated", ""),
+                "count": len(data.get("messages", [])),
             }
         )
