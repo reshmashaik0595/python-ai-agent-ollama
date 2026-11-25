@@ -188,6 +188,9 @@ while True:
         choice = input("Enter the chat number to resume (Press Enter to cancel): ")
         choice = choice.strip()
 
+        if not choice:
+            continue
+
         if choice.isdigit() or not( 1 <= int(choice) <= len(chats)):
             print("Cancelled. Invalid Choice.")
             continue
@@ -246,5 +249,13 @@ while True:
             "content": fallback,
         })
         print("ASSISTANT: " + fallback)
-        chat_file_path = save_chat(chat_file_path,messages[:1])
+        chat_file_path = save_chat(chat_file_path,messages[1:])
         continue
+
+    messages.append(
+        {
+            "role":"assistant",
+            "content":full_response
+        }
+    )
+    chat_file_path = save_chat(chat_file_path,messages[1:])
