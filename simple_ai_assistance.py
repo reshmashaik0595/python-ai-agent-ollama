@@ -12,7 +12,7 @@ from types import SimpleNamespace
 # Local project modules: available tools and shared logging helpers.
 from tools import TOOLS, run_tool
 from utilities.utilities import log
-from memory import list_chats, load_chat
+from memory import list_chats, load_chat, save_chat
 
 # Load local configuration from .env so connection details stay out of source code.
 load_dotenv()
@@ -246,4 +246,5 @@ while True:
             "content": fallback,
         })
         print("ASSISTANT: " + fallback)
+        chat_file_path = save_chat(chat_file_path,messages[:1])
         continue
